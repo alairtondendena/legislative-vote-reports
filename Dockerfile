@@ -18,6 +18,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-install-project --python /usr/local/bin/python3
 COPY data/ data/
 COPY output/ output/
+COPY scripts/ scripts/
 COPY tests/ tests/
 ENV PATH="/opt/venv/bin:$PATH"
 ENTRYPOINT []
