@@ -18,7 +18,9 @@ Row = dict[str, str]
 def _read(path: Path, parse: Callable[[Row], T]) -> Iterator[T]:
     # newline="" lets the csv module handle line endings itself: the sample
     # files mix CRLF (bills, votes) and LF (legislators, vote_results).
-    with path.open(newline="", encoding="utf-8") as file:
+    # utf-8-sig reads plain UTF-8 and also drops a leading byte order mark, which
+    # spreadsheet tools often add and which would otherwise corrupt the first header.
+    with path.open(newline="", encoding="utf-8-sig") as file:
         reader = csv.DictReader(file)
         for row in reader:
             try:
