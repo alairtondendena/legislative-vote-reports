@@ -1,0 +1,19 @@
+services:
+  # Writes the reports from ./data into ./output:
+  #   docker compose run --rm reports
+  reports:
+    build:
+      context: .
+      target: app
+    # Run as the host user so the reports in ./output are not owned by root.
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ./data:/app/data:ro
+      - ./output:/app/output
+
+  # Runs ruff, mypy and the test suite:
+  #   docker compose run --rm check
+  check:
+    build:
+      context: .
+      target: check
