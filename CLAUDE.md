@@ -18,7 +18,10 @@ uv run pytest                             # all tests
 uv run pytest tests/test_x.py::test_name  # a single test
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                               # strict; covers vote_reports/ and tests/
+python3 -m vote_reports                   # writes output/ from data/ (no install needed)
 ```
+
+`tests/expected/` holds hand-written reference reports. Never regenerate them from the code. When the output legitimately changes, update them by hand and re-run the program to refresh the committed `output/`.
 
 ## Decisions already made (see `docs/PLAN.md` for the reasoning)
 
@@ -49,7 +52,7 @@ The write-up (`docs/WRITEUP.md`) covers: time complexity and tradeoffs; extendin
 - **Output name collision**: the suggested output name `bills.csv` is the same as an input file. Write outputs to a separate directory (e.g. `output/`) so the input is never overwritten.
 - **Sponsor not in dataset**: bill `2900994` (H.R. 3684) has `sponsor_id` `400100`, which is absent from `legislators.csv`, so its sponsor must be `Unknown`. Bill `2952375` (H.R. 5376) is sponsored by `412211` (Rep. John Yarmuth).
 - **Legislator with no votes**: `412211` (Yarmuth) appears in `legislators.csv` but casts no votes. They must still be included with `0,0`. Every legislator and every bill should appear in the output, even with zero counts.
-- Some input files have no trailing newline.
+- **Mixed line endings**: `bills.csv` and `votes.csv` use CRLF; `legislators.csv` and `vote_results.csv` use LF. Some files have no trailing newline. Always open CSVs with `newline=""` and the `csv` module; shell tools (`awk`, `cut`) need `tr -d '\r'` first.
 
 Expected results from the sample data:
 - H.R. 3684 (vote `3314452`): 13 supporters, 6 opposers, sponsor `Unknown`.
