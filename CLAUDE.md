@@ -26,7 +26,7 @@ python3 -m vote_reports                   # writes output/ from data/ (no instal
 ## Decisions already made (see `docs/PLAN.md` for the reasoning)
 
 - Runtime uses the **standard library only** and must work on Python ≥ 3.10. No pandas.
-- Package layout is **flat** (`vote_reports/` at the repo root), so `python3 -m vote_reports` works without installing anything. Docker Compose (`reports` and `tests` services) is the alternative way to run it.
+- Package layout is **flat** (`vote_reports/` at the repo root), so `python3 -m vote_reports` works without installing anything. Docker Compose is the alternative way to run it: `docker compose run --rm reports` writes `output/`, and `docker compose run --rm check` runs ruff, mypy and pytest on Python 3.14.
 - **Streaming is required.** Never load `vote_results.csv` or `bills.csv` fully into memory (no `list(...)`). The target is O(L+B+V+R) time and O(L+V) memory. Readers and report builders are generators; report logic stays free of I/O.
 - Inputs live in `data/` (the original sample files, unchanged) and outputs in `output/`.
 - After each significant AI-assisted session, add a row to `docs/AI_USAGE.md`. Add time spent to the time log in `docs/PLAN.md` §9.

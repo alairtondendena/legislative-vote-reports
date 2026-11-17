@@ -21,12 +21,13 @@ Plus run instructions and a write-up (`docs/WRITEUP.md`) on complexity, trade-of
 | D2 | `requires-python >= 3.10` | Runs on the Python most users already have | Requiring 3.12+ would add little and risk failing on users' machines |
 | D3 | **Streaming pipeline**: time O(L+B+V+R), memory O(L+V) | See §3 | Load everything into lists/DataFrames: O(R) memory |
 | D4 | Flat package layout (`vote_reports/` at repo root) | `python3 -m vote_reports` works from a fresh clone with no install step | `src/` layout: the packaging best practice, but it needs `pip install -e .` before running |
-| D5 | Two ways to run: plain Python (primary) and **Docker Compose** (fallback) | Plain Python needs nothing installed. Compose removes Python-version risk and gives one-command `reports` and `tests` services | Docker only: forces a Docker dependency on users who already have Python |
+| D5 | Two ways to run: plain Python (primary) and **Docker Compose** (fallback) | Plain Python needs nothing installed. Compose removes Python-version risk and gives one-command `reports` and `check` services (`check` runs ruff, mypy and pytest) | Docker only: forces a Docker dependency on users who already have Python |
 | D6 | Dev tooling: `uv`, `pytest`, `ruff`, `mypy --strict` | Standard, fast, catches mistakes early, and only needed for development | Plain `unittest`: zero dependencies, but more verbose and less idiomatic today |
 | D7 | Input CSVs move to `data/`, reports go to `output/` | The suggested report name `bills.csv` is also an input file name, so separate folders prevent overwriting the input | Writing outputs to the repo root |
 | D8 | Generated reports are committed in `output/` | Readers can check the results without running anything | — |
 | D9 | Bad references are skipped with a warning on stderr, not a crash | One bad row shouldn't stop the whole report, and the warnings make the issue visible | Failing hard: right for a strict pipeline, but the sample data itself includes a missing sponsor that must be handled gracefully |
 | D10 | Reports use LF line endings and UTF-8 | Clean `git diff`s and Unix tools work without `\r` noise. The inputs mix CRLF and LF, so either choice is defensible; both are valid CSV | CRLF (RFC 4180's recommendation): shows as `^M` in diffs |
+| D11 | Development runs on Python 3.10; the Docker image uses 3.14 | 3.10 is the oldest supported version, so newer-only syntax fails locally first. It reached end of life in October 2026, so the image uses a currently supported version. The test suite runs on both | One version everywhere: either misses the minimum-version check or ships an end-of-life runtime |
 
 ## 3. Algorithm and complexity
 
@@ -90,7 +91,7 @@ scripts/benchmark.py
 data/              # the four sample input CSVs
 output/            # generated reports (committed)
 docs/              # PLAN.md, AI_USAGE.md, WRITEUP.md
-Dockerfile, compose.yaml, pyproject.toml, README.md, CLAUDE.md
+Dockerfile, compose.yaml, .dockerignore, pyproject.toml, README.md, CLAUDE.md
 ```
 
 Commands (to be documented in the README):
@@ -101,7 +102,7 @@ python3 -m vote_reports
 
 # Option B: Docker
 docker compose run --rm reports
-docker compose run --rm tests
+docker compose run --rm check     # ruff + mypy + pytest
 ```
 
 ## 7. Schedule
