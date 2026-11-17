@@ -63,7 +63,9 @@ The complexity claims will be checked with `scripts/benchmark.py`. It generates 
 | E7 | Duplicate `(legislator_id, vote_id)` | Assumed not to happen (see trade-off in §3) | No |
 | E8 | More than one vote for the same bill | The input format rules it out; checked during step 1 with a warning | No |
 | E9 | Output order | Same order as the input files, so output is deterministic and easy to diff | — |
-| E10 | Commas, quotes or non-ASCII characters in titles and names | Handled by the `csv` module; UTF-8 for both reading and writing | No |
+| E10 | Commas, quotes or non-ASCII characters in titles and names | Handled by the `csv` module; UTF-8 for both reading and writing; a leading byte order mark (common in spreadsheet exports) is accepted and dropped | No |
+| E11 | Malformed row (non-integer id, missing column) | Stop with exit code 1 and an error naming the file and line. Unlike E4-E6, the row can't be interpreted at all, so guessing would hide a broken export | No |
+| E12 | CRLF and LF line endings | Both accepted (`newline=""` + `csv` module) | Yes: `bills.csv` and `votes.csv` use CRLF |
 
 ## 5. Verification strategy
 
