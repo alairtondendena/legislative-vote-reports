@@ -21,7 +21,8 @@ class Legislator:
 class Bill:
     id: int
     title: str
-    sponsor_id: int
+    sponsor_id: int | None
+    """``None`` when the file leaves the sponsor blank; reported as "Unknown"."""
 
 
 @dataclass(frozen=True, slots=True)

@@ -47,6 +47,11 @@ CASES = {
         lambda p: append_line(p, "9,Act to Fund Roads, 2021,412211"),
         r"bills\.csv, line \d+: more fields than the 3 columns",
     ),
+    "empty id": (
+        "bills.csv",
+        lambda p: append_line(p, ",A bill without an id,412211"),
+        r"bills\.csv, line \d+: invalid row",
+    ),
     "missing field": (
         "votes.csv",
         lambda p: append_line(p, "3400000"),

@@ -133,11 +133,12 @@ def legislator_rows(legislators: Iterable[Legislator], tally: Tally) -> Iterator
 def bill_rows(
     bills: Iterable[Bill], tally: Tally, legislators: Mapping[int, Legislator]
 ) -> Iterator[BillRow]:
-    """One row per bill, in input order. A sponsor not in ``legislators`` is "Unknown"."""
+    """One row per bill, in input order. A blank sponsor, or one not in ``legislators``,
+    is "Unknown"."""
     unreported = tally.ids()
     for bill in bills:
         unreported.discard(bill.id)
-        sponsor = legislators.get(bill.sponsor_id)
+        sponsor = None if bill.sponsor_id is None else legislators.get(bill.sponsor_id)
         yield BillRow(
             id=bill.id,
             title=bill.title,

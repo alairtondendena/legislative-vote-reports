@@ -23,8 +23,8 @@ class DatasetSpec:
     voters_per_vote: int
     seed: int = 0
     dirty: bool = False
-    """If true, add bad references: unknown legislators, votes and bills, and vote
-    types other than yea/nay. Unknown sponsors and legislators or bills without votes
+    """If true, add bad references: unknown legislators, votes and bills, vote types
+    other than yea/nay, and blank sponsors. Unknown sponsors and legislators or bills without votes
     are always present, since the sample data has them too."""
 
 
@@ -43,9 +43,15 @@ def write_dataset(directory: Path, spec: DatasetSpec) -> int:
     legislator_rows = [
         (i, rng.choice(TRICKY_NAMES) if i % 7 == 0 else f"Legislator {i}") for i in legislator_ids
     ]
-    # Sponsor ids go a little past the last legislator, so some are unknown.
+    # Sponsor ids go a little past the last legislator, so some are unknown. Dirty
+    # datasets also leave some sponsors blank.
     bill_rows = [
-        (i, f"Bill {i}, part {i % 3}", rng.randint(1, spec.legislators + 5)) for i in bill_ids
+        (
+            i,
+            f"Bill {i}, part {i % 3}",
+            "" if spec.dirty and i % 11 == 0 else rng.randint(1, spec.legislators + 5),
+        )
+        for i in bill_ids
     ]
     # Shuffled so that file order differs from id order, as in the sample data.
     rng.shuffle(legislator_rows)

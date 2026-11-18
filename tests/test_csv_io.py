@@ -36,6 +36,13 @@ def test_reads_file_with_utf8_byte_order_mark(tmp_path: Path) -> None:
     assert list(read_legislators(path)) == [Legislator(1, "Alice")]
 
 
+def test_empty_sponsor_id_is_read_as_no_sponsor(tmp_path: Path) -> None:
+    path = tmp_path / "bills.csv"
+    path.write_text("id,title,sponsor_id\n1,No sponsor,\n2,Blank sponsor, \n", encoding="utf-8")
+
+    assert [bill.sponsor_id for bill in read_bills(path)] == [None, None]
+
+
 def test_reads_columns_by_header_name_not_position(tmp_path: Path) -> None:
     path = tmp_path / "bills.csv"
     path.write_text("sponsor_id,id,title\n7,1,A bill\n", encoding="utf-8")

@@ -79,7 +79,7 @@ To check that the tests catch real mistakes, bugs were injected into the code on
 
 | Situation | Behaviour |
 |---|---|
-| Sponsor not in `legislators.csv` | `primary_sponsor` is `Unknown` |
+| Sponsor blank, or not in `legislators.csv` | `primary_sponsor` is `Unknown` |
 | Legislator or bill with no votes | Included, with zero counts |
 | Vote result for an unknown legislator | Counted in the bill's totals; no legislator row; warning |
 | Vote on a bill missing from `bills.csv` | Counted in the legislator's totals; warning |

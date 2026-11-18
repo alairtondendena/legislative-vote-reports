@@ -66,6 +66,11 @@ def _read(
             yield record
 
 
+def _optional_int(value: str) -> int | None:
+    """An integer, or ``None`` for a blank field (e.g. a bill whose sponsor is not known)."""
+    return int(value) if value.strip() else None
+
+
 def read_legislators(path: Path) -> Iterator[Legislator]:
     return _read(path, ("id", "name"), lambda row: Legislator(id=int(row["id"]), name=row["name"]))
 
@@ -74,7 +79,9 @@ def read_bills(path: Path) -> Iterator[Bill]:
     return _read(
         path,
         ("id", "title", "sponsor_id"),
-        lambda row: Bill(id=int(row["id"]), title=row["title"], sponsor_id=int(row["sponsor_id"])),
+        lambda row: Bill(
+            id=int(row["id"]), title=row["title"], sponsor_id=_optional_int(row["sponsor_id"])
+        ),
     )
 
 

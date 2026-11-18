@@ -51,6 +51,7 @@ Read four CSVs (`legislators`, `bills`, `votes`, `vote_results`) and write two r
 | E16 | Repeated id in `vote_results.csv` | Not checked (D12) | No |
 | E17 | Extra columns in a file | Ignored, so the input can gain columns (e.g. a vote date) before the program uses them | No |
 | E18 | A run that fails partway | Earlier reports are left untouched; no temporary files remain (D13) | — |
+| E19 | Blank `sponsor_id` | `primary_sponsor = "Unknown"`: the sponsor's name is not available, which is the report definition's case for `Unknown`. Before, a blank sponsor stopped the whole run as a non-integer. Other ids may not be blank (E11) | No |
 
 ## 4. Verification
 

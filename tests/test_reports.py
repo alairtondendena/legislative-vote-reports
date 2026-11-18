@@ -66,6 +66,15 @@ def test_counts_support_and_opposition_per_legislator_and_per_bill() -> None:
     ]
 
 
+def test_e19_bill_without_sponsor_id_is_unknown() -> None:
+    no_sponsor = Bill(id=30, title="No sponsor", sponsor_id=None)
+    tallies = tally_votes(results(), BILL_ID_BY_VOTE_ID)
+
+    [row] = bill_rows([no_sponsor], tallies.by_bill, LEGISLATORS)
+
+    assert row.primary_sponsor == UNKNOWN_SPONSOR
+
+
 def test_e1_sponsor_missing_from_legislators_is_unknown() -> None:
     orphan_bill = Bill(id=30, title="Orphan", sponsor_id=999)
     tallies = tally_votes(results(), BILL_ID_BY_VOTE_ID)
