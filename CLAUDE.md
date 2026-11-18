@@ -27,7 +27,7 @@ uv run python -m scripts.benchmark --quick  # time/peak-memory scaling (Linux on
 ## Decisions already made (see `docs/DECISIONS.md` for the reasoning)
 
 - Runtime uses the **standard library only** and must work on Python ≥ 3.10. No pandas.
-- Package layout is **flat** (`vote_reports/` at the repo root), so `python3 -m vote_reports` works without installing anything. Docker Compose is the alternative way to run it: `docker compose run --rm reports` writes `output/`, and `docker compose run --rm check` runs ruff, mypy and pytest on Python 3.14.
+- Package layout is **flat** (`vote_reports/` at the repo root), so `python3 -m vote_reports` works without installing anything. CI (`.github/workflows/ci.yml`) runs lint, mypy and tests on 3.10 and 3.14 plus both Compose services. Docker Compose is the alternative way to run it: `docker compose run --rm reports` writes `output/`, and `docker compose run --rm check` runs ruff, mypy and pytest on Python 3.14.
 - **Streaming is required.** Never load `vote_results.csv` or `bills.csv` fully into memory (no `list(...)`). The target is O(L+B+V+R) time and O(L+B+V) memory (the O(B) is the set of bill ids used to reject repeats). Readers and report builders are generators; report logic stays free of I/O.
 - Input validation rule: a file that contradicts itself (missing header/column, wrong field count, non-integer, repeated id) raises `ValueError` in `csv_io.py`; a reference to something missing in another file only logs a warning in `reports.py`. Reports are staged in a temp dir and moved into place only after both succeed.
 - Inputs live in `data/` (the original sample files, unchanged) and outputs in `output/`.
@@ -47,7 +47,7 @@ Join path: `vote_results.vote_id → votes.id → votes.bill_id → bills.id`, a
 1. **Per legislator** (e.g. `legislators-support-oppose-count.csv`): `id,name,num_supported_bills,num_opposed_bills`
 2. **Per bill** (`bills.csv`): `id,title,supporter_count,opposer_count,primary_sponsor`. `primary_sponsor` is the sponsor's name, or `Unknown` if the sponsor isn't in `legislators.csv`.
 
-`WRITEUP.md` (repo root) answers four design questions: complexity and trade-offs (with benchmark results), adding columns such as "Bill Voted On Date" or "Co-Sponsors", reporting on a given list of legislators or bills, and development time. `docs/DECISIONS.md` lists the decisions (D1-D13), data edge cases (E1-E19) and verification steps.
+`WRITEUP.md` (repo root) answers four design questions: complexity and trade-offs (with benchmark results), adding columns such as "Bill Voted On Date" or "Co-Sponsors", reporting on a given list of legislators or bills, and development time. `docs/DECISIONS.md` lists the decisions (D1-D14), data edge cases (E1-E19) and verification steps.
 
 ## Data gotchas (verify the outputs against these)
 

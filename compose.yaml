@@ -7,8 +7,14 @@ services:
     build:
       context: .
       target: app
-    # Run as the host user so the reports in ./output are not owned by root.
-    user: "${UID:-1000}:${GID:-1000}"
+    # Runs as root, so it can write to ./output whatever the host user's uid, then gives
+    # the reports to the owner of ./output, so they are not left owned by root.
+    # ($$ escapes $ for Compose; extra arguments reach the program through "$@".)
+    entrypoint:
+      - sh
+      - -c
+      - python -m vote_reports "$$@" && chown -R "$$(stat -c %u:%g output)" output
+      - vote_reports
     volumes:
       - ./data:/app/data:ro
       - ./output:/app/output

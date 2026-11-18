@@ -62,5 +62,9 @@ Each session lists what Claude did, including the mistakes it caught in its own 
 
 - **Claude:** did a full code review of the project as a newcomer would read it. Found that `Tally.add` counted any vote type other than yea as opposition, so adding a type such as "Present" later would silently count those votes as nays. Fixed it so only explicitly mapped types are counted, and added a test that fails if the old behaviour returns. Added a "Where to start" note to the README and rewrote this log as bullet points.
 - **Author:** reviewed the code and the results line by line, including the hand-written expected reports, and confirmed they are correct. Approved publishing the repository.
+### 2026-11-18: Final gaps
+
+- **Claude:** fixed a blank `sponsor_id`, which stopped the whole run instead of being reported as "Unknown", and added blank sponsors to the synthetic data so the SQL cross-check covers them. Moved the design notes to `WRITEUP.md`, with each section headed by its question, and added a note on why the command-line tool counts vote results while the ORM sketch counts distinct bills and legislators. Added CI on GitHub Actions and a status badge. While preparing the Docker job, simulated a host user whose uid isn't 1000 and found that `docker compose run --rm reports` failed with "Permission denied"; fixed the service so it works for any user.
+- **Author:** listed the four gaps to close: the blank sponsor, the counting note, CI with a badge, and a write-up with the four questions.
 
 Development time per phase, measured from the session transcripts, is in [WRITEUP.md §4](../WRITEUP.md#4-how-long-did-the-work-take).
