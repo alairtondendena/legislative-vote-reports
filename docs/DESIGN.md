@@ -8,12 +8,12 @@ With L legislators, B bills, V votes and R vote results:
 
 | Step | What happens | Time | Memory kept |
 |---|---|---|---|
-| 1 | Read `votes.csv` into a `vote_id → bill_id` dict | O(V) | O(V) |
+| 1 | Read `votes.csv` into a `vote_id → bill_id` dict, rejecting repeated vote ids | O(V) | O(V) |
 | 2 | Stream `vote_results.csv` once, adding to four counters (yea/nay × legislator/bill) | O(R) | O(L + V) |
-| 3 | Read `legislators.csv` into an `id → legislator` dict; write the legislator report | O(L) | O(L) |
-| 4 | Stream `bills.csv`; write each bill's report row as it is read | O(B) | O(1) per row |
+| 3 | Read `legislators.csv` into an `id → legislator` dict, rejecting repeated ids; write the legislator report | O(L) | O(L) |
+| 4 | Stream `bills.csv`; write each bill's report row as it is read, rejecting repeated bill ids | O(B) | O(B) ids; titles O(1) |
 
-**Total: O(L + B + V + R) time and O(L + V) memory.** Each row of each file is read once, and every lookup is an average O(1) dict access, so the time is the minimum possible: every input has to be read at least once. The two largest inputs, vote results and bill titles, are never held in memory. Only ids and integer counts are kept.
+**Total: O(L + B + V + R) time and O(L + B + V) memory.** Each row of each file is read once, and every lookup is an average O(1) dict access, so the time is the minimum possible: every input has to be read at least once. The two largest inputs, vote results and bill titles, are never held in memory. Only ids and integer counts are kept. The O(B) term is a set of bill ids, used only to reject a bill listed twice; without that check memory would be O(L + V), and I chose the check (see the trade-offs).
 
 ### Measured
 
@@ -23,22 +23,22 @@ With L legislators, B bills, V votes and R vote results:
 
 | V | R | Input | Time | R per second | Peak memory |
 |---:|---:|---:|---:|---:|---:|
-| 91 | 39,585 | 0.9 MB | 0.13 s | 295,515 | 13.7 MB |
-| 1,004 | 436,740 | 10.0 MB | 1.15 s | 380,454 | 13.7 MB |
-| 4,969 | 2,161,515 | 49.3 MB | 5.76 s | 375,551 | 14.8 MB |
-| 10,019 | 4,358,265 | 99.4 MB | 11.86 s | 367,487 | 15.7 MB |
-| 20,020 | 8,708,700 | 198.6 MB | 22.58 s | 385,721 | 19.1 MB |
+| 91 | 39,585 | 0.9 MB | 0.15 s | 257,412 | 13.9 MB |
+| 1,004 | 436,740 | 10.0 MB | 1.30 s | 336,446 | 14.1 MB |
+| 4,969 | 2,161,515 | 49.3 MB | 6.44 s | 335,729 | 15.9 MB |
+| 10,019 | 4,358,265 | 99.4 MB | 12.89 s | 338,211 | 16.8 MB |
+| 20,020 | 8,708,700 | 198.6 MB | 27.33 s | 318,628 | 22.4 MB |
 
 *More results per vote (L = 5,000 and V = 1,991 fixed, so only R grows):*
 
 | R | Input | Time | R per second | Peak memory |
 |---:|---:|---:|---:|---:|
-| 497,750 | 12.0 MB | 1.38 s | 359,913 | 15.8 MB |
-| 1,991,000 | 47.3 MB | 5.25 s | 379,596 | 15.9 MB |
-| 3,982,000 | 94.3 MB | 11.48 s | 346,940 | 16.2 MB |
-| 7,964,000 | 188.4 MB | 25.19 s | 316,150 | 16.1 MB |
+| 497,750 | 12.0 MB | 1.62 s | 306,727 | 16.5 MB |
+| 1,991,000 | 47.3 MB | 6.11 s | 326,106 | 16.6 MB |
+| 3,982,000 | 94.3 MB | 11.84 s | 336,329 | 16.9 MB |
+| 7,964,000 | 188.4 MB | 24.71 s | 322,338 | 16.9 MB |
 
-Rows per second stay roughly constant across a 220× range, so time grows linearly. The second table isolates R: it grows 16× while peak memory stays flat. In the first table, memory grows only with V, at about 280 bytes per vote for the vote index and the per-bill counters. The interpreter alone accounts for about 13 MB.
+Rows per second stay roughly constant across a 220× range, so time grows linearly. The second table isolates R: it grows 16× while peak memory stays flat. In the first table, memory grows with V and B, at about 450 bytes per vote, for the vote index, the per-bill counters and the set of bill ids. The interpreter alone accounts for about 14 MB. The input checks (field counts and repeated ids) cost about 10% of throughput: before them, the same runs processed about 370,000 vote results per second.
 
 One measurement detail: my first version read peak memory with `wait4`. On Linux, a child process's peak-memory figure starts at its parent's memory size at the moment of the fork, so it included the benchmark's own memory. A 300 MB parent made an 8.7 MB child report 309 MB. The benchmark now has each child read its own peak from `/proc/self/status` instead.
 
@@ -47,7 +47,8 @@ One measurement detail: my first version read peak memory with `wait4`. On Linux
 - **Standard library instead of pandas.** pandas would make the core logic a few lines of `merge` and `groupby`. But it adds a heavy dependency, loads every file fully into memory, and hides the edge-case rules (unknown sponsor, skipped vote types, unmatched ids) inside join options. With plain Python those rules are explicit statements that each have a test.
 - **Streaming instead of loading everything.** Memory stays flat as vote results grow, but the steps have to run in a fixed order: votes before vote results, legislators before bills. The flow is also less obvious than "load four lists, then compute". To keep it readable, readers and report builders are generators over plain records, and the counting code does no file I/O, so tests pass in lists.
 - **One assumption left unchecked.** I assume each (legislator, vote) pair appears at most once. Detecting duplicates would mean remembering every pair seen, which is O(R) memory, exactly what streaming avoids. In a real system a unique constraint in the database guarantees this, which is the right place to enforce it.
-- **Warn instead of fail for bad references, but fail on malformed rows.** A vote result that points to an unknown vote is skipped with a warning: the report stays useful and the problem is visible. A row that can't be parsed at all (a non-integer id, a missing column) stops the run with the file and line number, because guessing would hide a broken export.
+- **Fail on a broken file, warn on a broken reference.** If a file contradicts itself (no header, a missing column, the wrong number of fields, a value that isn't an integer, a repeated id), the run stops with the file and line, because no reading of the data can be trusted. If a file refers to something another file lacks (an unknown legislator, vote or bill), the run warns and continues, because the rest of the report is still right. Either way nothing is written halfway: both reports are written to a temporary directory and moved into place only when both are complete, so a failed run leaves earlier reports untouched.
+- **Rejecting repeated bill ids costs O(B) memory.** Bills are streamed, so spotting a bill listed twice needs a set of the ids seen. Without it, a repeated bill silently appears twice in the report. A set of integers is small (a few MB for 100,000 bills), it does not grow with R, and silent wrong output is the worse failure. Repeated legislator and vote ids are checked at no extra cost, since those files are kept in memory anyway. Vote result ids are not checked, because that set would grow with R.
 - **Readability over raw speed.** Profiling a 440k-row run showed that splitting the CSV text into fields takes 0.09 s of about 1.1 s. The rest goes into the Python objects created for each row: `DictReader` dicts, dataclasses and the `VoteType` lookup. A loop over raw tuples with column indexes would be faster (`csv.reader` alone is 3.8× faster than `DictReader`), but much harder to read and change. At around 370k rows per second I kept the readable version and would only optimize after profiling a real workload.
 - **Hash joins instead of a sort-merge join.** Using even less memory would need inputs sorted by key and a merge join. The files aren't sorted, and sorting them costs O(R log R) time plus temporary disk space, for a gain that only matters when the vote index itself doesn't fit in memory.
 
@@ -70,7 +71,7 @@ A per-legislator column such as `num_cosponsored_bills` is one more counter, O(L
 I see two readings of this question, and the design handles both.
 
 **A list of ids to report on (a subset).** Add `--legislator-ids` / `--bill-ids` options (or a file of ids) and filter during the existing pass:
-- During the single pass over vote results, count only results whose legislator or bill is in the requested set. Memory drops to O(selected ids + V) instead of O(L + V).
+- During the single pass over vote results, count only results whose legislator or bill is in the requested set. The counters shrink to the selected ids; the lookup tables and the repeated-id checks stay O(L + B + V).
 - Emit rows only for the requested ids, in the order requested. Requested ids that don't exist get a warning, the same way unknown references do today.
 - Time is still O(R), because vote results aren't indexed by legislator or bill, so finding the relevant rows still means scanning all of them. That limit is the argument for the next point.
 
@@ -129,9 +130,10 @@ All the work was done in Claude Code sessions (see [AI_USAGE.md](AI_USAGE.md)), 
 | Analysis and planning | 16 min | 5 min |
 | Core implementation | 20 min | 8 min |
 | Tests, SQL cross-check, benchmark, docs | 15 min | 15 min |
-| Preparing for publication | 13 min | 13 min |
-| **Total** | **1 h 03 min** | **40 min** |
+| Preparing for publication | 15 min | 15 min |
+| Audit and input validation | 13 min | 7 min |
+| **Total** | **1 h 18 min** | **49 min** |
 
-All sessions took place between 2026-11-17 18:15 and 2026-11-17 21:44 (local time).
+All sessions took place between 2026-11-17 18:15 and 2026-11-17 21:59 (local time).
 
-The core implementation took about a third of the interaction time. The rest went into planning, verification, benchmarking and documentation. [AI_USAGE.md](AI_USAGE.md) describes how AI assistance was used and how its work was checked.
+The core implementation took about a quarter of the interaction time. The rest went into planning, verification, input validation, benchmarking and documentation. [AI_USAGE.md](AI_USAGE.md) describes how AI assistance was used and how its work was checked.

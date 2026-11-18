@@ -83,15 +83,18 @@ To check that the tests catch real mistakes, bugs were injected into the code on
 | Vote on a bill missing from `bills.csv` | Counted in the legislator's totals; warning |
 | Vote result for an unknown vote | Skipped (it can't be linked to a bill); warning |
 | `vote_type` other than 1 (yea) or 2 (nay) | Skipped; warning |
-| Malformed row (non-integer id, missing column) | Stops with an error naming the file and line |
+| Empty file, missing column, or a row with too many or too few fields (e.g. an unquoted comma) | Stops with an error naming the file (and line) |
+| Non-integer id or vote type | Stops with an error naming the file and line |
+| The same id twice in `legislators.csv`, `bills.csv` or `votes.csv` | Stops with an error naming the file, line and id |
+| Extra columns | Ignored |
 | Row order | Same as the input files |
 | CRLF or LF line endings, UTF-8 with or without BOM, quoted fields | All accepted |
 
-Warnings go to stderr; the sample data produces none. One assumption is not checked: each legislator votes at most once per vote. Checking it would cost memory proportional to the number of vote results; see [the design notes](docs/DESIGN.md#trade-offs).
+In short: a file that contradicts itself stops the run; a reference to something missing elsewhere only warns. A failed run never replaces earlier reports. Warnings go to stderr; the sample data produces none. Two things are not checked, because checking them would cost memory proportional to the number of vote results: that each legislator votes at most once per vote, and that vote result ids are unique; see [the design notes](docs/DESIGN.md#trade-offs).
 
 ## Performance
 
-Time grows linearly with the input: 300,000-390,000 vote results per second at every size measured, and 8.7 million rows in 23 s. Memory does not grow with the number of vote results: 16 MB peak whether there are 0.5 or 8 million of them. Both are measured by [`scripts/benchmark.py`](scripts/benchmark.py); see [the design notes](docs/DESIGN.md#1-time-complexity-and-trade-offs).
+Time grows linearly with the input: 260,000-340,000 vote results per second at every size measured, and 8.7 million rows in 27 s. Memory does not grow with the number of vote results: about 17 MB peak whether there are 0.5 or 8 million of them. Both are measured by [`scripts/benchmark.py`](scripts/benchmark.py); see [the design notes](docs/DESIGN.md#1-time-complexity-and-trade-offs).
 
 ## Project layout
 

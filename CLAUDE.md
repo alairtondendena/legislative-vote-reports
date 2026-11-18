@@ -28,7 +28,8 @@ uv run python -m scripts.benchmark --quick  # time/peak-memory scaling (Linux on
 
 - Runtime uses the **standard library only** and must work on Python ≥ 3.10. No pandas.
 - Package layout is **flat** (`vote_reports/` at the repo root), so `python3 -m vote_reports` works without installing anything. Docker Compose is the alternative way to run it: `docker compose run --rm reports` writes `output/`, and `docker compose run --rm check` runs ruff, mypy and pytest on Python 3.14.
-- **Streaming is required.** Never load `vote_results.csv` or `bills.csv` fully into memory (no `list(...)`). The target is O(L+B+V+R) time and O(L+V) memory. Readers and report builders are generators; report logic stays free of I/O.
+- **Streaming is required.** Never load `vote_results.csv` or `bills.csv` fully into memory (no `list(...)`). The target is O(L+B+V+R) time and O(L+B+V) memory (the O(B) is the set of bill ids used to reject repeats). Readers and report builders are generators; report logic stays free of I/O.
+- Input validation rule: a file that contradicts itself (missing header/column, wrong field count, non-integer, repeated id) raises `ValueError` in `csv_io.py`; a reference to something missing in another file only logs a warning in `reports.py`. Reports are staged in a temp dir and moved into place only after both succeed.
 - Inputs live in `data/` (the original sample files, unchanged) and outputs in `output/`.
 - After each significant AI-assisted session, add a row to `docs/AI_USAGE.md`. Development time is measured from the Claude Code session timestamps and reported in `docs/AI_USAGE.md` and `docs/DESIGN.md` §4.
 
