@@ -15,6 +15,9 @@ from vote_reports.models import Bill, Legislator, Vote, VoteResult, VoteType
 logger = logging.getLogger(__name__)
 
 UNKNOWN_SPONSOR = "Unknown"
+# Only these vote types count as support or opposition. Any other code, including one
+# added to VoteType later (e.g. "Present"), is skipped with a warning, not miscounted.
+COUNTED_VOTE_TYPES = frozenset({VoteType.YEA, VoteType.NAY})
 
 
 class LegislatorRow(NamedTuple):
@@ -44,8 +47,12 @@ class Tally:
     opposed: Counter[int] = field(default_factory=Counter)
 
     def add(self, key: int, vote_type: VoteType) -> None:
-        counter = self.supported if vote_type is VoteType.YEA else self.opposed
-        counter[key] += 1
+        if vote_type is VoteType.YEA:
+            self.supported[key] += 1
+        elif vote_type is VoteType.NAY:
+            self.opposed[key] += 1
+        else:
+            raise ValueError(f"no counter for vote type {int(vote_type)}")
 
     def ids(self) -> set[int]:
         return self.supported.keys() | self.opposed.keys()
@@ -90,11 +97,10 @@ def tally_votes(
         if bill_id is None:
             unknown_vote_rows += 1
             continue
-        try:
-            vote_type = VoteType(result.vote_type)
-        except ValueError:
+        if result.vote_type not in COUNTED_VOTE_TYPES:
             other_type_rows[result.vote_type] += 1
             continue
+        vote_type = VoteType(result.vote_type)
         tallies.by_legislator.add(result.legislator_id, vote_type)
         tallies.by_bill.add(bill_id, vote_type)
 

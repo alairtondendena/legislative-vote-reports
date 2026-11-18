@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 from itertools import count, islice
+from typing import cast
 
 import pytest
 
@@ -10,6 +11,7 @@ from vote_reports.reports import (
     UNKNOWN_SPONSOR,
     BillRow,
     LegislatorRow,
+    Tally,
     bill_rows,
     index_votes,
     legislator_rows,
@@ -175,3 +177,12 @@ def test_bill_rows_are_produced_lazily() -> None:
     first_rows = list(islice(bill_rows(endless_bills, tallies.by_bill, LEGISLATORS), 3))
 
     assert [row.id for row in first_rows] == [0, 1, 2]
+
+
+def test_tally_refuses_a_vote_type_it_has_no_counter_for() -> None:
+    # Guards against a future VoteType member (say PRESENT) being counted as opposition
+    # by default: every vote type must be mapped to a counter explicitly.
+    present = cast(VoteType, 3)
+
+    with pytest.raises(ValueError, match="no counter for vote type 3"):
+        Tally().add(ALICE.id, present)
