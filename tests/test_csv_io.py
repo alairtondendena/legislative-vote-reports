@@ -5,8 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from vote_reports.csv_io import read_bills, read_legislators, read_vote_results, write_csv
-from vote_reports.models import Bill, Legislator, VoteResult
+from vote_reports.csv_io import (
+    read_bills,
+    read_legislators,
+    read_vote_results,
+    read_votes,
+    write_csv,
+)
+from vote_reports.models import Bill, Legislator, Vote, VoteResult
 
 
 def test_reads_crlf_and_lf_line_endings_alike(tmp_path: Path) -> None:
@@ -49,12 +55,12 @@ def test_malformed_row_error_names_file_and_line(tmp_path: Path) -> None:
         next(results)
 
 
-def test_missing_column_is_reported_as_malformed(tmp_path: Path) -> None:
-    path = tmp_path / "bills.csv"
-    path.write_text("id,title\n1,A bill\n", encoding="utf-8")
+def test_extra_columns_are_ignored(tmp_path: Path) -> None:
+    # Lets the input gain columns (e.g. a vote date) before the program uses them.
+    path = tmp_path / "votes.csv"
+    path.write_text("id,bill_id,date\n100,10,2021-11-05\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match=r"line 2.*sponsor_id"):
-        list(read_bills(path))
+    assert list(read_votes(path)) == [Vote(id=100, bill_id=10)]
 
 
 def test_written_csv_round_trips_commas_quotes_and_unicode(tmp_path: Path) -> None:

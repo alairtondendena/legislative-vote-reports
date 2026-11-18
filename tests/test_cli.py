@@ -38,7 +38,7 @@ def test_refuses_to_overwrite_the_input_bills_file(
     exit_code = main(["--data-dir", str(data_dir), "--out-dir", str(data_dir)])
 
     assert exit_code == 1
-    assert "would overwrite the input" in capsys.readouterr().err
+    assert "would replace the input" in capsys.readouterr().err
     assert (data_dir / "bills.csv").read_bytes() == original
 
 

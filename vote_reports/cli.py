@@ -2,7 +2,9 @@
 
 import argparse
 import logging
+import os
 import sys
+import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -29,15 +31,18 @@ BILLS_REPORT = "bills.csv"
 def generate_reports(data_dir: Path, out_dir: Path) -> list[Path]:
     """Write both reports to ``out_dir`` and return their paths.
 
-    Memory is O(L + V): legislators and the vote → bill index are kept, while vote
-    results and bills are streamed. Time is O(L + B + V + R): each row is read once.
+    Memory is O(L + B + V): legislators, the vote → bill index and the ids already seen
+    are kept, while vote results and bill titles are streamed. Time is O(L + B + V + R):
+    each row is read once.
+
+    Reports are written to a temporary directory first and moved into place only after
+    both are complete, so an error leaves any earlier reports untouched.
     """
     bills_input = data_dir / "bills.csv"
-    bills_output = out_dir / BILLS_REPORT
-    # The bills input is still being read while the report is written, so writing over
-    # it would truncate it mid-read.
-    if bills_output.resolve() == bills_input.resolve():
-        raise ValueError(f"{bills_output} would overwrite the input; choose another --out-dir")
+    if (out_dir / BILLS_REPORT).resolve() == bills_input.resolve():
+        raise ValueError(
+            f"{out_dir / BILLS_REPORT} would replace the input; choose another --out-dir"
+        )
 
     bill_id_by_vote_id = index_votes(read_votes(data_dir / "votes.csv"))
     tallies = tally_votes(read_vote_results(data_dir / "vote_results.csv"), bill_id_by_vote_id)
@@ -45,18 +50,24 @@ def generate_reports(data_dir: Path, out_dir: Path) -> list[Path]:
         legislator.id: legislator for legislator in read_legislators(data_dir / "legislators.csv")
     }
 
-    legislators_output = out_dir / LEGISLATORS_REPORT
-    write_csv(
-        legislators_output,
-        LegislatorRow._fields,
-        legislator_rows(legislators.values(), tallies.by_legislator),
-    )
-    write_csv(
-        bills_output,
-        BillRow._fields,
-        bill_rows(read_bills(bills_input), tallies.by_bill, legislators),
-    )
-    return [legislators_output, bills_output]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    # Inside out_dir, so the final moves stay on one filesystem and are atomic.
+    with tempfile.TemporaryDirectory(dir=out_dir, prefix=".staging-") as staging:
+        staged = Path(staging)
+        write_csv(
+            staged / LEGISLATORS_REPORT,
+            LegislatorRow._fields,
+            legislator_rows(legislators.values(), tallies.by_legislator),
+        )
+        write_csv(
+            staged / BILLS_REPORT,
+            BillRow._fields,
+            bill_rows(read_bills(bills_input), tallies.by_bill, legislators),
+        )
+        written = [out_dir / LEGISLATORS_REPORT, out_dir / BILLS_REPORT]
+        for path in written:
+            os.replace(staged / path.name, path)
+    return written
 
 
 def main(argv: Sequence[str] | None = None) -> int:
