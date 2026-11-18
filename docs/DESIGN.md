@@ -124,6 +124,14 @@ All the work was done in Claude Code sessions (see [AI_USAGE.md](AI_USAGE.md)), 
 - **Interaction time:** all time spent in the sessions, including reading Claude's work and replying, but excluding breaks of more than 20 minutes.
 - **Claude working time:** from each prompt to Claude's final reply.
 
-<!-- time-table -->
+| Phase | Interaction time | Claude working time |
+|---|---:|---:|
+| Analysis and planning | 16 min | 5 min |
+| Core implementation | 20 min | 8 min |
+| Tests, SQL cross-check, benchmark, docs | 15 min | 15 min |
+| Preparing for publication | 13 min | 13 min |
+| **Total** | **1 h 03 min** | **40 min** |
 
-The core implementation took about a third of the time. Most of the rest went into proving correctness, measuring performance and documenting decisions. [AI_USAGE.md](AI_USAGE.md) describes how AI assistance was used and how its work was checked.
+All sessions took place between 2026-11-17 18:15 and 2026-11-17 21:44 (local time).
+
+The core implementation took about a third of the interaction time. The rest went into planning, verification, benchmarking and documentation. [AI_USAGE.md](AI_USAGE.md) describes how AI assistance was used and how its work was checked.
