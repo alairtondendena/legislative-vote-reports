@@ -132,8 +132,9 @@ All the work was done in Claude Code sessions (see [AI_USAGE.md](AI_USAGE.md)), 
 | Tests, SQL cross-check, benchmark, docs | 15 min | 15 min |
 | Preparing for publication | 15 min | 15 min |
 | Audit and input validation | 13 min | 7 min |
-| **Total** | **1 h 18 min** | **49 min** |
+| Review and publication | 13 min | 3 min |
+| **Total** | **1 h 31 min** | **52 min** |
 
-All sessions took place between 2026-11-17 18:15 and 2026-11-17 21:59 (local time).
+The sessions took place on the evening of 2026-11-17 and the morning of 2026-11-18 (between 18:15 and 09:49 local time, with an overnight break that is not counted).
 
-The core implementation took about a quarter of the interaction time. The rest went into planning, verification, input validation, benchmarking and documentation. [AI_USAGE.md](AI_USAGE.md) describes how AI assistance was used and how its work was checked.
+The core implementation took about a fifth of the interaction time. The rest went into planning, verification, input validation, benchmarking and documentation. [AI_USAGE.md](AI_USAGE.md) describes how AI assistance was used and how its work was checked.

@@ -47,7 +47,7 @@ Join path: `vote_results.vote_id → votes.id → votes.bill_id → bills.id`, a
 1. **Per legislator** (e.g. `legislators-support-oppose-count.csv`): `id,name,num_supported_bills,num_opposed_bills`
 2. **Per bill** (`bills.csv`): `id,title,supporter_count,opposer_count,primary_sponsor`. `primary_sponsor` is the sponsor's name, or `Unknown` if the sponsor isn't in `legislators.csv`.
 
-`docs/DESIGN.md` covers complexity and trade-offs (with benchmark results), adding columns such as "Bill Voted On Date" or "Co-Sponsors", reporting on a given list of legislators or bills, and development time. `docs/DECISIONS.md` lists the decisions (D1-D11), data edge cases (E1-E12) and verification steps.
+`docs/DESIGN.md` covers complexity and trade-offs (with benchmark results), adding columns such as "Bill Voted On Date" or "Co-Sponsors", reporting on a given list of legislators or bills, and development time. `docs/DECISIONS.md` lists the decisions (D1-D13), data edge cases (E1-E18) and verification steps.
 
 ## Data gotchas (verify the outputs against these)
 

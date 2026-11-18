@@ -2,6 +2,8 @@
 
 A small command-line tool that reads US congressional voting data from CSV files and reports how each legislator voted and how each bill was voted on.
 
+**Where to start.** The counting logic is in [`vote_reports/reports.py`](vote_reports/reports.py), about 160 lines with no file I/O. [`csv_io.py`](vote_reports/csv_io.py) reads and validates the input, and [`cli.py`](vote_reports/cli.py) connects the two. Everything else is evidence: the tests show the reports are correct, and the benchmark shows how time and memory scale. The questions behind the design (complexity and trade-offs, adding columns, reporting on a given list of legislators or bills, development time) are answered in [docs/DESIGN.md](docs/DESIGN.md), §1-§4.
+
 ## Input
 
 Four CSV files, in `data/` by default:

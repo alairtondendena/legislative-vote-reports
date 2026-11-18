@@ -54,7 +54,7 @@ Read four CSVs (`legislators`, `bills`, `votes`, `vote_results`) and write two r
 
 ## 4. Verification
 
-1. **Hand-checked expected values** from the sample data: H.R. 3684 has 13 supporters, 6 opposers and sponsor `Unknown`. H.R. 5376 has 6 supporters, 13 opposers and sponsor Rep. John Yarmuth. Every voting legislator has 1 supported and 1 opposed bill; Yarmuth has 0 and 0. These were derived from the CSVs with `awk`, without using the program, and written by hand into `tests/expected/`. _(Pending: the author's own check.)_
+1. **Hand-checked expected values** from the sample data: H.R. 3684 has 13 supporters, 6 opposers and sponsor `Unknown`. H.R. 5376 has 6 supporters, 13 opposers and sponsor Rep. John Yarmuth. Every voting legislator has 1 supported and 1 opposed bill; Yarmuth has 0 and 0. These were derived from the CSVs with `awk`, without using the program, and written by hand into `tests/expected/`. The author checked them against the CSVs.
 2. **Golden-file test:** the complete output CSVs are compared to committed expected files.
 3. **Unit tests:** one small fixture per edge case. E13-E15 and E18 are tested end to end (`tests/test_validation.py`): each damages one file of a copy of the sample data and checks that the run stops with the right message and that earlier reports survive.
 4. **Invariant tests:** total supporters across all bills equals total supported bills across all legislators, when every voter is known. The same holds for opposers, and together they equal the number of vote results. Checked on the sample data and on 3 clean synthetic datasets.
