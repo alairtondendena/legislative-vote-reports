@@ -19,9 +19,10 @@ uv run pytest tests/test_x.py::test_name  # a single test
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                               # strict; covers vote_reports/ and tests/
 python3 -m vote_reports                   # writes output/ from data/ (no install needed)
+uv run python -m scripts.benchmark --quick  # time/peak-memory scaling (Linux only)
 ```
 
-`tests/expected/` holds hand-written reference reports. Never regenerate them from the code. When the output legitimately changes, update them by hand and re-run the program to refresh the committed `output/`.
+`tests/test_cross_check.py` recomputes both reports in SQLite on the sample data and on seeded synthetic datasets from `scripts/synthetic.py`; any change to the counting rules must be mirrored in its SQL. `tests/expected/` holds hand-written reference reports. Never regenerate them from the code. When the output legitimately changes, update them by hand and re-run the program to refresh the committed `output/`.
 
 ## Decisions already made (see `docs/PLAN.md` for the reasoning)
 

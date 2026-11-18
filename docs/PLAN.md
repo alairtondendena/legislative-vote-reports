@@ -48,7 +48,7 @@ The work is a two-way join (`vote_results → votes → bills`, and `vote_result
 
 **Trade-off:** detecting duplicate `(legislator_id, vote_id)` rows would need a set of every pair seen, which is O(R) memory and breaks D3. We **assume these pairs are unique**, as a unique constraint in the source database would guarantee, and document that assumption instead of checking it.
 
-The complexity claims will be checked with `scripts/benchmark.py`. It generates synthetic datasets of increasing size R and records run time and peak memory (RSS). The expected result: time grows linearly with R, and memory stays flat.
+The complexity claims are checked with `scripts/benchmark.py`, and the results are in [WRITEUP.md](WRITEUP.md#measured). Time grows linearly. With L and V fixed, peak memory stays at about 16 MB while R grows 16×.
 
 ## 4. Data assumptions and edge cases
 
@@ -69,9 +69,9 @@ The complexity claims will be checked with `scripts/benchmark.py`. It generates 
 
 ## 5. Verification strategy
 
-1. **Hand-checked expected values** from the sample data: H.R. 3684 has 13 supporters, 6 opposers and sponsor `Unknown`. H.R. 5376 has 6 supporters, 13 opposers and sponsor Rep. John Yarmuth. Every voting legislator has 1 supported and 1 opposed bill; Yarmuth has 0 and 0. These were re-derived by the author directly from the CSVs.
+1. **Hand-checked expected values** from the sample data: H.R. 3684 has 13 supporters, 6 opposers and sponsor `Unknown`. H.R. 5376 has 6 supporters, 13 opposers and sponsor Rep. John Yarmuth. Every voting legislator has 1 supported and 1 opposed bill; Yarmuth has 0 and 0. These were derived from the CSVs with `awk`, without using the program, and written by hand into `tests/expected/`. _(Pending: the author's own check.)_
 2. **Golden-file test:** the complete output CSVs are compared to committed expected files.
-3. **Unit tests:** one small fixture per edge case E1-E10.
+3. **Unit tests:** one small fixture per edge case E1-E12.
 4. **Invariant tests:** total supporters across all bills equals total supported bills across all legislators, when every voter is known. The same holds for opposers, and together they equal the number of vote results. Checked on the sample data and on 3 clean synthetic datasets.
 5. **Independent check:** a test loads the same CSVs into in-memory `sqlite3` and computes both reports with SQL `JOIN`s and `GROUP BY`. Two separate implementations must agree. The SQL version is also how this would look on PostgreSQL. It runs on the sample data and on 6 seeded synthetic datasets (`scripts/synthetic.py`): 3 clean and 3 "dirty" ones that contain every bad reference from §4. Synthetic files are shuffled so that file order differs from id order, which exposes ordering bugs.
 5a. **Mutation checks (manual):** bugs were injected on purpose (yea/nay swapped, empty sponsor, totals keyed by vote id, "Present" counted as nay, unknown legislators dropped, rows sorted by id), and in each case the test suite failed. The cross-check alone caught every one. This shows the tests detect wrong results, not just that they pass.
