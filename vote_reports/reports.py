@@ -87,7 +87,7 @@ def tally_votes(
     """Count yeas and nays per legislator and per bill in a single pass over ``results``.
 
     Assumes each (legislator, vote) pair occurs at most once. Checking that would need
-    a set of every pair seen, i.e. O(R) memory (see docs/DESIGN.md §1).
+    a set of every pair seen, i.e. O(R) memory (see WRITEUP.md §1).
     """
     tallies = VoteTallies(by_legislator=Tally(), by_bill=Tally())
     unknown_vote_rows = 0

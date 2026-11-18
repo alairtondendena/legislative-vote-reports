@@ -63,4 +63,4 @@ Each session lists what Claude did, including the mistakes it caught in its own 
 - **Claude:** did a full code review of the project as a newcomer would read it. Found that `Tally.add` counted any vote type other than yea as opposition, so adding a type such as "Present" later would silently count those votes as nays. Fixed it so only explicitly mapped types are counted, and added a test that fails if the old behaviour returns. Added a "Where to start" note to the README and rewrote this log as bullet points.
 - **Author:** reviewed the code and the results line by line, including the hand-written expected reports, and confirmed they are correct. Approved publishing the repository.
 
-Development time per phase, measured from the session transcripts, is in [DESIGN.md §4](DESIGN.md#4-development-time).
+Development time per phase, measured from the session transcripts, is in [WRITEUP.md §4](../WRITEUP.md#4-how-long-did-the-work-take).

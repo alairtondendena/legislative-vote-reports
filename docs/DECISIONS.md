@@ -1,6 +1,6 @@
 # Design decisions
 
-Each decision below gives its reason and the alternative that was rejected. The algorithm, the complexity analysis and the measurements are in [DESIGN.md](DESIGN.md).
+Each decision below gives its reason and the alternative that was rejected. The algorithm, the complexity analysis and the measurements are in [WRITEUP.md](../WRITEUP.md).
 
 ## 1. Scope
 
@@ -17,7 +17,7 @@ Read four CSVs (`legislators`, `bills`, `votes`, `vote_results`) and write two r
 |---|---|---|---|
 | D1 | Python, **standard library only** at runtime (`csv`, `dataclasses`, `enum`, `collections`, `argparse`) | The join and aggregation logic stays explicit and testable, with nothing to install | **pandas**: shorter, but it hides the edge-case handling, adds a heavy dependency, and loads every file fully into memory, which breaks D3 |
 | D2 | `requires-python >= 3.10` | Runs on the Python most users already have | Requiring 3.12+ would add little and risk failing on users' machines |
-| D3 | **Streaming pipeline**: time O(L+B+V+R), memory O(L+B+V) | Only ids and counts are kept; vote results and bill titles are streamed. The O(B) term is the set of bill ids that lets repeated bills be rejected (D12). See [DESIGN.md §1](DESIGN.md#1-time-complexity-and-trade-offs) | Load everything into lists/DataFrames: O(R) memory |
+| D3 | **Streaming pipeline**: time O(L+B+V+R), memory O(L+B+V) | Only ids and counts are kept; vote results and bill titles are streamed. The O(B) term is the set of bill ids that lets repeated bills be rejected (D12). See [WRITEUP.md §1](../WRITEUP.md#1-what-is-the-time-complexity-and-which-trade-offs-did-i-make) | Load everything into lists/DataFrames: O(R) memory |
 | D4 | Flat package layout (`vote_reports/` at repo root) | `python3 -m vote_reports` works from a fresh clone with no install step | `src/` layout: the packaging best practice, but it needs `pip install -e .` before running |
 | D5 | Two ways to run: plain Python (primary) and **Docker Compose** (fallback) | Plain Python needs nothing installed. Compose removes Python-version risk and gives one-command `reports` and `check` services (`check` runs ruff, mypy and pytest) | Docker only: forces a Docker dependency on users who already have Python |
 | D6 | Dev tooling: `uv`, `pytest`, `ruff`, `mypy --strict` | Standard, fast, catches mistakes early, and only needed for development | Plain `unittest`: zero dependencies, but more verbose and less idiomatic today |
@@ -39,7 +39,7 @@ Read four CSVs (`legislators`, `bills`, `votes`, `vote_results`) and write two r
 | E4 | Vote result from a legislator not in `legislators.csv` | Counted in the bill totals (a legislator did vote); no legislator row; warning | No |
 | E5 | Vote result with an unknown `vote_id` | Skipped (no bill to link it to); warning | No |
 | E6 | `vote_type` other than 1 or 2 (e.g. Present, Not Voting) | Parsed with a `VoteType` enum; skipped; warning | No |
-| E7 | Duplicate `(legislator_id, vote_id)` | Assumed not to happen: checking would need O(R) memory (see [DESIGN.md §1](DESIGN.md#trade-offs)) | No |
+| E7 | Duplicate `(legislator_id, vote_id)` | Assumed not to happen: checking would need O(R) memory (see [WRITEUP.md §1](../WRITEUP.md#trade-offs)) | No |
 | E8 | More than one vote for the same bill | The input format rules it out; checked while indexing votes, with a warning | No |
 | E9 | Output order | Same order as the input files, so output is deterministic and easy to diff | — |
 | E10 | Commas, quotes or non-ASCII characters in titles and names | Handled by the `csv` module; UTF-8 for both reading and writing; a leading byte order mark (common in spreadsheet exports) is accepted and dropped | No |

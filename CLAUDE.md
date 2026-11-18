@@ -31,7 +31,7 @@ uv run python -m scripts.benchmark --quick  # time/peak-memory scaling (Linux on
 - **Streaming is required.** Never load `vote_results.csv` or `bills.csv` fully into memory (no `list(...)`). The target is O(L+B+V+R) time and O(L+B+V) memory (the O(B) is the set of bill ids used to reject repeats). Readers and report builders are generators; report logic stays free of I/O.
 - Input validation rule: a file that contradicts itself (missing header/column, wrong field count, non-integer, repeated id) raises `ValueError` in `csv_io.py`; a reference to something missing in another file only logs a warning in `reports.py`. Reports are staged in a temp dir and moved into place only after both succeed.
 - Inputs live in `data/` (the original sample files, unchanged) and outputs in `output/`.
-- After each significant AI-assisted session, add a row to `docs/AI_USAGE.md`. Development time is measured from the Claude Code session timestamps and reported in `docs/AI_USAGE.md` and `docs/DESIGN.md` §4.
+- After each significant AI-assisted session, add a row to `docs/AI_USAGE.md`. Development time is measured from the Claude Code session timestamps and reported in `docs/AI_USAGE.md` and `WRITEUP.md` §4.
 
 ## Data model (input CSVs in `data/`)
 
@@ -47,7 +47,7 @@ Join path: `vote_results.vote_id → votes.id → votes.bill_id → bills.id`, a
 1. **Per legislator** (e.g. `legislators-support-oppose-count.csv`): `id,name,num_supported_bills,num_opposed_bills`
 2. **Per bill** (`bills.csv`): `id,title,supporter_count,opposer_count,primary_sponsor`. `primary_sponsor` is the sponsor's name, or `Unknown` if the sponsor isn't in `legislators.csv`.
 
-`docs/DESIGN.md` covers complexity and trade-offs (with benchmark results), adding columns such as "Bill Voted On Date" or "Co-Sponsors", reporting on a given list of legislators or bills, and development time. `docs/DECISIONS.md` lists the decisions (D1-D13), data edge cases (E1-E19) and verification steps.
+`WRITEUP.md` (repo root) answers four design questions: complexity and trade-offs (with benchmark results), adding columns such as "Bill Voted On Date" or "Co-Sponsors", reporting on a given list of legislators or bills, and development time. `docs/DECISIONS.md` lists the decisions (D1-D13), data edge cases (E1-E19) and verification steps.
 
 ## Data gotchas (verify the outputs against these)
 

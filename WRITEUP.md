@@ -1,8 +1,8 @@
-# Design notes
+# Write-up
 
-How the program works, what it costs, and how it would extend. How to run it and how correctness is shown are in the [README](../README.md). Each design decision, with the alternatives I rejected, is in [DECISIONS.md](DECISIONS.md).
+Answers to four questions about the design: what it costs, how it would grow, and how long it took. How to run it and how correctness is shown are in the [README](README.md). Each design decision, with the alternatives I rejected, is in [docs/DECISIONS.md](docs/DECISIONS.md).
 
-## 1. Time complexity and trade-offs
+## 1. What is the time complexity, and which trade-offs did I make?
 
 With L legislators, B bills, V votes and R vote results:
 
@@ -17,7 +17,7 @@ With L legislators, B bills, V votes and R vote results:
 
 ### Measured
 
-[`scripts/benchmark.py`](../scripts/benchmark.py) generates random datasets of growing size and runs the program on each in a separate process. It was run on an Intel Core i5-1334U with Python 3.10.
+[`scripts/benchmark.py`](scripts/benchmark.py) generates random datasets of growing size and runs the program on each in a separate process. It was run on an Intel Core i5-1334U with Python 3.10.
 
 *More votes (V and R grow together; shaped like the US House: 500 legislators, 435 voting each time):*
 
@@ -52,7 +52,7 @@ One measurement detail: my first version read peak memory with `wait4`. On Linux
 - **Readability over raw speed.** Profiling a 440k-row run showed that splitting the CSV text into fields takes 0.09 s of about 1.1 s. The rest goes into the Python objects created for each row: `DictReader` dicts, dataclasses and the `VoteType` lookup. A loop over raw tuples with column indexes would be faster (`csv.reader` alone is 3.8× faster than `DictReader`), but much harder to read and change. At around 370k rows per second I kept the readable version and would only optimize after profiling a real workload.
 - **Hash joins instead of a sort-merge join.** Using even less memory would need inputs sorted by key and a merge join. The files aren't sorted, and sorting them costs O(R log R) time plus temporary disk space, for a gain that only matters when the vote index itself doesn't fit in memory.
 
-## 2. Adding columns such as "Bill Voted On Date" or "Co-Sponsors"
+## 2. How would the solution change to support new columns, such as "Bill Voted On Date" or "Co-Sponsors"?
 
 Adding a column touches four small places: the record in `models.py`, its parser in `csv_io.py`, the row type in `reports.py` (`BillRow` or `LegislatorRow`), and the function that builds that row. The CSV header comes from the row type's field names, so the header and the rows can't get out of sync. The golden files and the SQL cross-check then confirm the new column end to end.
 
@@ -66,7 +66,7 @@ A per-legislator column such as `num_cosponsored_bills` is one more counter, O(L
 
 **When to generalize.** With two reports and a handful of columns, explicit row types are the clearest option. If the number of columns kept growing, or users chose their own columns, I would move to a declarative list of columns (name plus a function that computes the value) and build the header and rows from it. I wouldn't add that before it is needed.
 
-## 3. Generating the CSV for a given list of legislators or bills
+## 3. How would the solution change if, instead of CSV files, it were given a list of legislators or bills to report on?
 
 I see two readings of this question, and the design handles both.
 
@@ -113,14 +113,20 @@ writer.writerows(legislator_rows.iterator(chunk_size=2000))  # streamed, like th
 ```
 
 - **Speed:** Django indexes foreign-key columns by default (`vote_results.legislator_id`, `vote_results.vote_id`, `votes.bill_id`), so the database reads only the rows for the requested ids. That is the time improvement the CSV version can't get.
-- **Distinct counting:** `distinct=True` counts *bills* and *legislators* rather than vote rows, so the result stays correct even when a bill has several votes. In the streaming CSV version that guarantee would cost O(R) memory; in the database it is cheap.
+- **Distinct counting:** `distinct=True` counts *bills* and *legislators* rather than vote rows. See the note below on how this differs from the command-line version.
 - **Integrity:** a `UniqueConstraint` on `(legislator, vote)` turns the unchecked assumption from question 1 into a rule the database enforces.
 - **Unknown sponsors:** the `Coalesce` covers a sponsor who isn't in the table. That requires the sponsor foreign key to be nullable, or created with `db_constraint=False` when it may point to people not yet loaded.
 - **Delivery:** `.iterator()` streams rows from the database into the CSV writer, or into a `StreamingHttpResponse` for a download, so memory stays flat there too.
 
-## 4. Development time
+**Note: the two versions count differently, on purpose.** The command-line tool counts *vote results*: `num_supported_bills` is the number of yea votes the legislator cast, and `supporter_count` is the number of yea votes on the bill. Those equal the number of *bills* and *legislators* only under two assumptions: at most one vote per bill (checked, with a warning) and at most one result per legislator per vote (not checked, because that would cost O(R) memory; see question 1). The ORM version counts distinct bills and legislators, so it does not depend on either assumption.
 
-All the work was done in Claude Code sessions (see [AI_USAGE.md](AI_USAGE.md)), so the time is measured from the session transcripts' timestamps rather than estimated:
+- **When they agree:** whenever both assumptions hold, which includes the sample data. There the two versions give identical reports.
+- **When they differ:** when a bill has several votes. A legislator who voted yea on two votes on the same bill counts 2 supported bills in the command-line tool and 1 in the ORM version. A legislator who voted yea on one vote and nay on another counts the bill as both supported and opposed in *both* versions; deciding which vote should count is the product question discussed in question 2.
+- **Cost:** in the database, `COUNT(DISTINCT ...)` makes PostgreSQL sort or hash each group's values, which is slower than a plain count but needs no extra application memory. In the streaming tool, the same guarantee would need a set of every (legislator, bill) pair seen, which is O(R) memory.
+
+## 4. How long did the work take?
+
+All the work was done in Claude Code sessions (see [docs/AI_USAGE.md](docs/AI_USAGE.md)), so the time is measured from the session transcripts' timestamps rather than estimated:
 
 - **Interaction time:** all time spent in the sessions, including reading Claude's work and replying, but excluding breaks of more than 20 minutes.
 - **Claude working time:** from each prompt to Claude's final reply.
@@ -137,4 +143,4 @@ All the work was done in Claude Code sessions (see [AI_USAGE.md](AI_USAGE.md)), 
 
 The sessions took place on the evening of 2026-11-17 and the morning of 2026-11-18 (between 18:15 and 09:49 local time, with an overnight break that is not counted).
 
-The core implementation took about a fifth of the interaction time. The rest went into planning, verification, input validation, benchmarking and documentation. [AI_USAGE.md](AI_USAGE.md) describes how AI assistance was used and how its work was checked.
+The core implementation took about a fifth of the interaction time. The rest went into planning, verification, input validation, benchmarking and documentation. [docs/AI_USAGE.md](docs/AI_USAGE.md) describes how AI assistance was used and how its work was checked.

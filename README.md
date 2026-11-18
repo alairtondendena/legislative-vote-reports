@@ -2,7 +2,7 @@
 
 A small command-line tool that reads US congressional voting data from CSV files and reports how each legislator voted and how each bill was voted on.
 
-**Where to start.** The counting logic is in [`vote_reports/reports.py`](vote_reports/reports.py), about 160 lines with no file I/O. [`csv_io.py`](vote_reports/csv_io.py) reads and validates the input, and [`cli.py`](vote_reports/cli.py) connects the two. Everything else is evidence: the tests show the reports are correct, and the benchmark shows how time and memory scale. The questions behind the design (complexity and trade-offs, adding columns, reporting on a given list of legislators or bills, development time) are answered in [docs/DESIGN.md](docs/DESIGN.md), §1-§4.
+**Where to start.** The counting logic is in [`vote_reports/reports.py`](vote_reports/reports.py), about 160 lines with no file I/O. [`csv_io.py`](vote_reports/csv_io.py) reads and validates the input, and [`cli.py`](vote_reports/cli.py) connects the two. Everything else is evidence: the tests show the reports are correct, and the benchmark shows how time and memory scale. [WRITEUP.md](WRITEUP.md) answers four questions about the design: complexity and trade-offs, adding columns, reporting on a given list of legislators or bills, and development time.
 
 ## Input
 
@@ -92,11 +92,11 @@ To check that the tests catch real mistakes, bugs were injected into the code on
 | Row order | Same as the input files |
 | CRLF or LF line endings, UTF-8 with or without BOM, quoted fields | All accepted |
 
-In short: a file that contradicts itself stops the run; a reference to something missing elsewhere only warns. A failed run never replaces earlier reports. Warnings go to stderr; the sample data produces none. Two things are not checked, because checking them would cost memory proportional to the number of vote results: that each legislator votes at most once per vote, and that vote result ids are unique; see [the design notes](docs/DESIGN.md#trade-offs).
+In short: a file that contradicts itself stops the run; a reference to something missing elsewhere only warns. A failed run never replaces earlier reports. Warnings go to stderr; the sample data produces none. Two things are not checked, because checking them would cost memory proportional to the number of vote results: that each legislator votes at most once per vote, and that vote result ids are unique; see [the write-up](WRITEUP.md#trade-offs).
 
 ## Performance
 
-Time grows linearly with the input: 260,000-340,000 vote results per second at every size measured, and 8.7 million rows in 27 s. Memory does not grow with the number of vote results: about 17 MB peak whether there are 0.5 or 8 million of them. Both are measured by [`scripts/benchmark.py`](scripts/benchmark.py); see [the design notes](docs/DESIGN.md#1-time-complexity-and-trade-offs).
+Time grows linearly with the input: 260,000-340,000 vote results per second at every size measured, and 8.7 million rows in 27 s. Memory does not grow with the number of vote results: about 17 MB peak whether there are 0.5 or 8 million of them. Both are measured by [`scripts/benchmark.py`](scripts/benchmark.py); see [the write-up](WRITEUP.md#1-what-is-the-time-complexity-and-which-trade-offs-did-i-make).
 
 ## Project layout
 
@@ -107,11 +107,12 @@ tests/          unit, end-to-end and SQL cross-check tests; expected/ holds hand
 scripts/        synthetic.py (random test datasets) and benchmark.py
 data/           the sample input CSVs, unchanged
 output/         the generated reports
-docs/           DESIGN.md, DECISIONS.md, AI_USAGE.md
+WRITEUP.md      answers to the four design questions
+docs/           DECISIONS.md, AI_USAGE.md
 ```
 
 ## Documents
 
-- [docs/DESIGN.md](docs/DESIGN.md): how it works, complexity and trade-offs, measured performance, and how it would extend.
+- [WRITEUP.md](WRITEUP.md): complexity and trade-offs with measured performance, how the design would extend, and development time.
 - [docs/DECISIONS.md](docs/DECISIONS.md): every design decision, why it was made and what was rejected; data edge cases; how correctness is verified.
 - [docs/AI_USAGE.md](docs/AI_USAGE.md): how AI assistance was used and how its work was checked.
