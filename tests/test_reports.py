@@ -1,4 +1,4 @@
-"""Counting rules and edge cases (E1-E9 in docs/PLAN.md §4), on in-memory records."""
+"""Counting rules and edge cases (E1-E9 in docs/DECISIONS.md §3), on in-memory records."""
 
 from collections.abc import Iterator
 from itertools import count, islice

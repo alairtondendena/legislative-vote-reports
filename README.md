@@ -1,13 +1,28 @@
 # Legislative Vote Reports
 
-Reads the four sample CSVs (legislators, bills, votes, vote results) and writes two reports:
+A small command-line tool that reads US congressional voting data from CSV files and reports how each legislator voted and how each bill was voted on.
+
+## Input
+
+Four CSV files, in `data/` by default:
+
+| File | Columns | Meaning |
+|---|---|---|
+| `legislators.csv` | `id, name` | A legislator |
+| `bills.csv` | `id, title, sponsor_id` | A bill and the legislator id of its primary sponsor |
+| `votes.csv` | `id, bill_id` | A vote held on a bill (at most one per bill) |
+| `vote_results.csv` | `id, legislator_id, vote_id, vote_type` | How one legislator voted in one vote: `1` = yea (support), `2` = nay (oppose) |
+
+The sample data in `data/` covers two 2021 House votes: 19 representatives voting on the Build Back Better Act and the Infrastructure Investment and Jobs Act.
+
+## Output
 
 | Report | One row per | Columns |
 |---|---|---|
 | [`output/legislators-support-oppose-count.csv`](output/legislators-support-oppose-count.csv) | legislator | `id, name, num_supported_bills, num_opposed_bills` |
 | [`output/bills.csv`](output/bills.csv) | bill | `id, title, supporter_count, opposer_count, primary_sponsor` |
 
-The generated reports are committed, so you can read the results without running anything.
+A legislator *supports* a bill by voting yea on it and *opposes* it by voting nay. `primary_sponsor` is the sponsor's name, or `Unknown` when the sponsor is not in `legislators.csv`. Every legislator and every bill gets a row, even with no votes. The reports for the sample data are committed, so you can read the results without running anything.
 
 ## Running it
 
@@ -72,11 +87,11 @@ To check that the tests catch real mistakes, bugs were injected into the code on
 | Row order | Same as the input files |
 | CRLF or LF line endings, UTF-8 with or without BOM, quoted fields | All accepted |
 
-Warnings go to stderr; the sample data produces none. One assumption is not checked: each legislator votes at most once per vote. Checking it would cost memory proportional to the number of vote results; see the write-up.
+Warnings go to stderr; the sample data produces none. One assumption is not checked: each legislator votes at most once per vote. Checking it would cost memory proportional to the number of vote results; see [the design notes](docs/DESIGN.md#trade-offs).
 
 ## Performance
 
-Time grows linearly with the input: 300,000-390,000 vote results per second at every size measured, and 8.7 million rows in 23 s. Memory does not grow with the number of vote results: 16 MB peak whether there are 0.5 or 8 million of them. Both are measured by [`scripts/benchmark.py`](scripts/benchmark.py); see [the write-up](docs/WRITEUP.md#1-time-complexity-and-trade-offs).
+Time grows linearly with the input: 300,000-390,000 vote results per second at every size measured, and 8.7 million rows in 23 s. Memory does not grow with the number of vote results: 16 MB peak whether there are 0.5 or 8 million of them. Both are measured by [`scripts/benchmark.py`](scripts/benchmark.py); see [the design notes](docs/DESIGN.md#1-time-complexity-and-trade-offs).
 
 ## Project layout
 
@@ -87,11 +102,11 @@ tests/          unit, end-to-end and SQL cross-check tests; expected/ holds hand
 scripts/        synthetic.py (random test datasets) and benchmark.py
 data/           the sample input CSVs, unchanged
 output/         the generated reports
-docs/           WRITEUP.md, PLAN.md (decisions and rationale), AI_USAGE.md
+docs/           DESIGN.md, DECISIONS.md, AI_USAGE.md
 ```
 
 ## Documents
 
-- [docs/WRITEUP.md](docs/WRITEUP.md): complexity, trade-offs and extensibility.
-- [docs/PLAN.md](docs/PLAN.md): every design decision, why it was made, and what was rejected.
+- [docs/DESIGN.md](docs/DESIGN.md): how it works, complexity and trade-offs, measured performance, and how it would extend.
+- [docs/DECISIONS.md](docs/DECISIONS.md): every design decision, why it was made and what was rejected; data edge cases; how correctness is verified.
 - [docs/AI_USAGE.md](docs/AI_USAGE.md): how AI assistance was used and how its work was checked.

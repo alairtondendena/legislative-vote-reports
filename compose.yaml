@@ -1,3 +1,5 @@
+name: vote-reports
+
 services:
   # Writes the reports from ./data into ./output:
   #   docker compose run --rm reports

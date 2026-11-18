@@ -1,6 +1,6 @@
-# Write-up
+# Design notes
 
-Design notes: complexity, trade-offs and how the design would extend. How to run the code and how correctness is shown are in the [README](../README.md). Each design decision, with the alternatives I rejected, is in [PLAN.md](PLAN.md).
+How the program works, what it costs, and how it would extend. How to run it and how correctness is shown are in the [README](../README.md). Each design decision, with the alternatives I rejected, is in [DECISIONS.md](DECISIONS.md).
 
 ## 1. Time complexity and trade-offs
 
@@ -117,15 +117,13 @@ writer.writerows(legislator_rows.iterator(chunk_size=2000))  # streamed, like th
 - **Unknown sponsors:** the `Coalesce` covers a sponsor who isn't in the table. That requires the sponsor foreign key to be nullable, or created with `db_constraint=False` when it may point to people not yet loaded.
 - **Delivery:** `.iterator()` streams rows from the database into the CSV writer, or into a `StreamingHttpResponse` for a download, so memory stays flat there too.
 
-## 4. Time spent
+## 4. Development time
 
-| Phase | Time |
-|---|---|
-| Planning and design decisions | _TODO_ |
-| Core implementation (reports correct on the sample data) | _TODO_ |
-| Edge cases, tests and the SQL cross-check | _TODO_ |
-| Benchmark | _TODO_ |
-| Documentation and review | _TODO_ |
-| **Total** | _TODO_ |
+All the work was done in Claude Code sessions (see [AI_USAGE.md](AI_USAGE.md)), so the time is measured from the session transcripts' timestamps rather than estimated:
 
-I spent most of the time on proving correctness, measuring performance and documenting decisions, which is where I think extra time is most useful. I used AI assistance throughout; [AI_USAGE.md](AI_USAGE.md) describes how, and how I checked its work.
+- **Interaction time:** all time spent in the sessions, including reading Claude's work and replying, but excluding breaks of more than 20 minutes.
+- **Claude working time:** from each prompt to Claude's final reply.
+
+<!-- time-table -->
+
+The core implementation took about a third of the time. Most of the rest went into proving correctness, measuring performance and documenting decisions. [AI_USAGE.md](AI_USAGE.md) describes how AI assistance was used and how its work was checked.
